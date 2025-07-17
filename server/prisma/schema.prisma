@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int         @id @default(autoincrement())
+  name       String      @db.VarChar(255)
+  email      String      @unique
+  provider   String
+  oauth_id   String
+  image      String?
+  createdAt  DateTime    @default(now())
+  ChatGroups ChatGroup[]
+
+  @@map("users")
+}
+
+model ChatGroup {
+  id        String   @id @default(uuid()) @db.Uuid
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  title     String   @db.VarChar(255)
+  passcode  String   @db.VarChar(20)
+  createdAt DateTime @default(now())
+
+  GroupUsers GroupUsers[]
+  Chats      Chats[]
+
+  @@index([userId, createdAt])
+  @@map("chat_groups")
+}
+
+model GroupUsers {
+  id        Int       @id @default(autoincrement())
+  group     ChatGroup @relation(fields: [groupId], references: [id])
+  groupId   String    @db.Uuid
+  name      String    @db.VarChar(255)
+  createdAt DateTime  @default(now())
+
+  @@map("group_users")
+}
+
+model Chats {
+  id        String    @id @default(uuid())
+  group     ChatGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId   String    @db.Uuid
+  message   String?
+  name      String
+  file      String?
+  createdAt DateTime  @default(now())
+
+  @@index([createdAt])
+  @@map("chats")
+}
